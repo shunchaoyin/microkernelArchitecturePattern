@@ -7,13 +7,33 @@
 
 constexpr int PLUGIN_API_VERSION = 1;
 
+#ifdef _WIN32
+#ifdef BUILDING_DLL
+#define DLL_EXPORT __declspec(dllexport)
+#else
+#define DLL_EXPORT __declspec(dllimport)
+#endif
+#else
+#define DLL_EXPORT
+#endif
+
+
 class APlugin
 {
 public:
-	DLL_EXPORT virtual ~APlugin() = 0
-	{};
+	DLL_EXPORT virtual ~APlugin() = default;
 
 	DLL_EXPORT virtual void unregisterPlugin() = 0;
+
+	void link(std::vector<APlugin*>* consummers);
+	void send();
+
+protected:
+	virtual std::shared_ptr<AEvent> _createEvent() = 0;
+	virtual void receive(std::shared_ptr<AEvent> event) = 0;
+
+private:
+	std::vector<APlugin*> _consummers;
 };
 
 struct PluginDetails
@@ -22,7 +42,7 @@ struct PluginDetails
 	const char* className;
 	const char* pluginName;
 	const char* pluginVersion;
-	APlugin*(*initializeFunction)();
+	APlugin* (*initializeFunction)();
 };
 
 #define PLUGIN(classType, pluginName, pluginVersion)	\
