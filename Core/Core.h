@@ -18,4 +18,5 @@ private:
 	void unloadPlugins();
 
 	std::vector<HINSTANCE> _plugins;
+    	std::map<std::string, std::vector<APlugin*>> _consumers;
 };
