@@ -1,4 +1,5 @@
 #include "Plugin.h"
+#include <iostream>
 
 void APlugin::link(std::vector<APlugin*>* consummers)
 {
@@ -8,7 +9,24 @@ void APlugin::link(std::vector<APlugin*>* consummers)
 
 void APlugin::send()
 {
-	std::shared_ptr<AEvent> event = _createEvent();//create the event
-	for(APlugin* plugin : _consummers)
-		std::async(&APlugin::receive, plugin, event);//call all receive functions async
+	try
+	{
+		std::shared_ptr<AEvent> event = _createEvent(); // create the event
+		std::vector<std::future<void>> futures;
+
+		for (APlugin* plugin : _consummers)
+		{
+			futures.push_back(std::async(std::launch::async, &APlugin::receive, plugin, event)); // call all receive functions async
+		}
+
+		// Optionally wait for all async operations to complete
+		for (auto& future : futures)
+		{
+			future.get();
+		}
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "Exception in send: " << e.what() << std::endl;
+	}
 }
