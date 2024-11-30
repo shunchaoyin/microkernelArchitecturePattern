@@ -10,43 +10,44 @@ template <typename Result, typename... Args>
 class SignalEx
 {
 public:
-    SignalEx() : _currentID{ 0 } {}
+    SignalEx() : _currentID{0} {}
 
-    SignalEx(const SignalEx&) = delete;
-    SignalEx& operator=(const SignalEx&) = delete;
+    SignalEx(const SignalEx &) = delete;
+    SignalEx &operator=(const SignalEx &) = delete;
 
     /**
      * Connect a member function to this SignalEx
      */
     template <typename T>
-    int connect(std::shared_ptr<T> inst, Result(T::* funct)(Args...)) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return connect([wptr = std::weak_ptr<T>(inst), funct](Args... args) -> Result {
+    int connect(std::shared_ptr<T> inst, Result (T::*funct)(Args...))
+    {
+        return connect([wptr = std::weak_ptr<T>(inst), funct](Args... args) -> Result
+                       {
             if (auto sptr = wptr.lock()) {
                 return (sptr.get()->*funct)(args...);
             }
-            return Result();
-            });
+            return Result(); });
     }
 
     /**
      * Connect a const member function to this SignalEx
      */
     template <typename T>
-    int connect(std::shared_ptr<T> inst, Result(T::* funct)(Args...) const) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return connect([wptr = std::weak_ptr<T>(inst), funct](Args... args) -> Result {
+    int connect(std::shared_ptr<T> inst, Result (T::*funct)(Args...) const)
+    {
+        return connect([wptr = std::weak_ptr<T>(inst), funct](Args... args) -> Result
+                       {
             if (auto sptr = wptr.lock()) {
                 return (sptr.get()->*funct)(args...);
             }
-            return Result();
-            });
+            return Result(); });
     }
 
     /**
      * Connect std::function to this SignalEx
      */
-    int connect(const std::function<Result(Args...)>& slot) {
+    int connect(const std::function<Result(Args...)> &slot)
+    {
         std::lock_guard<std::mutex> lock(_mutex);
         _slots[++_currentID] = slot;
         return _currentID;
@@ -55,7 +56,8 @@ public:
     /**
      * Disconnect a previously connected function
      */
-    void disconnect(int id) {
+    void disconnect(int id)
+    {
         std::lock_guard<std::mutex> lock(_mutex);
         _slots.erase(id);
     }
@@ -63,7 +65,8 @@ public:
     /**
      * Disconnect all previously connected functions
      */
-    void disconnectAll() {
+    void disconnectAll()
+    {
         std::lock_guard<std::mutex> lock(_mutex);
         _slots.clear();
     }
@@ -71,11 +74,17 @@ public:
     /**
      * Call all connected functions and collect their results
      */
-    std::vector<Result> emit(Args... args) const {
+    std::vector<Result> emit(Args... args) const
+    {
         std::vector<Result> results;
         std::lock_guard<std::mutex> lock(_mutex);
-        for (const auto& [id, slot] : _slots) {
-            results.push_back(slot(args...)); // Collect return values
+
+        std::cout << "Emitting signal to " << _slots.size() << " slots.\n"; // 调试信息
+
+        for (const auto &[id, slot] : _slots)
+        {
+            std::cout << "Calling slot with ID: " << id << "\n"; // 调试信息
+            results.push_back(slot(args...));                    // Collect return values
         }
         return results;
     }

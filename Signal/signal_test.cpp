@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Signal.hpp"
+#include "signal.hpp"
 
 // Define a class with member functions to connect to the signal
 class MyClass
