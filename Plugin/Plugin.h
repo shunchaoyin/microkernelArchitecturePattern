@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <future>
+#include <memory>
 
 #include "Event.h"
 
@@ -17,7 +18,6 @@ constexpr int PLUGIN_API_VERSION = 1;
 #define DLL_EXPORT
 #endif
 
-
 class APlugin
 {
 public:
@@ -25,7 +25,7 @@ public:
 
 	DLL_EXPORT virtual void unregisterPlugin() = 0;
 
-	void link(std::vector<APlugin*>* consummers);
+	void link(std::vector<APlugin *> *consumers); // interactive with other plugins
 	void send();
 
 protected:
@@ -33,33 +33,32 @@ protected:
 	virtual void receive(std::shared_ptr<AEvent> event) = 0;
 
 private:
-	std::vector<APlugin*> _consummers;
+	std::vector<APlugin *> _consumers;
 };
 
 struct PluginDetails
 {
 	int apiVersion;
-	const char* className;
-	const char* pluginName;
-	const char* pluginVersion;
-	APlugin* (*initializeFunction)();
+	const char *className;
+	const char *pluginName;
+	const char *pluginVersion;
+	APlugin *(*initializeFunction)();
 };
 
-#define PLUGIN(classType, pluginName, pluginVersion)	\
-extern "C"												\
-{														\
-	DLL_EXPORT APlugin* getPlugin()						\
-	{													\
-		static classType plugin;						\
-		return &plugin;									\
-	}													\
-														\
-	DLL_EXPORT PluginDetails exports =					\
-	{													\
-		PLUGIN_API_VERSION,								\
-		#classType,										\
-		pluginName,										\
-		pluginVersion,									\
-		getPlugin										\
-	};													\
-}
+#define PLUGIN(classType, pluginName, pluginVersion) \
+	extern "C"                                       \
+	{                                                \
+		DLL_EXPORT APlugin *getPlugin()              \
+		{                                            \
+			static classType plugin;                 \
+			return &plugin;                          \
+		}                                            \
+                                                     \
+		DLL_EXPORT PluginDetails exports =           \
+			{                                        \
+				PLUGIN_API_VERSION,                  \
+				#classType,                          \
+				pluginName,                          \
+				pluginVersion,                       \
+				getPlugin};                          \
+	}
